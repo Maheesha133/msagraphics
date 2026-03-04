@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSA Graphics – Order Form</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #d42b2b;
+    --orange: #e8700a;
+    --dark: #0d0d0d;
+    --dark2: #161616;
+    --gray: #242424;
+    --light: #f0ece6;
+    --muted: #888;
+    --green: #27ae60;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--dark);
+    color: var(--light);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* Header */
+  .header {
+    background: var(--dark2);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 20px 40px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .header-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px; letter-spacing: 4px;
+    background: linear-gradient(135deg,#d42b2b,#e8700a);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header-sub { color: var(--muted); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+
+  /* Container */
+  .container { max-width: 780px; margin: 0 auto; padding: 50px 24px 0; }
+
+  .form-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 48px; font-weight: 900;
+    text-transform: uppercase; line-height: 1;
+    margin-bottom: 8px;
+  }
+  .form-title span {
+    background: linear-gradient(135deg,#d42b2b,#e8700a);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .form-subtitle { color: var(--muted); font-size: 15px; margin-bottom: 40px; }
+
+  .card {
+    background: var(--dark2);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px;
+    padding: 36px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-title::before {
+    content: '';
+    width: 3px; height: 18px;
+    background: linear-gradient(to bottom, var(--red), var(--orange));
+    border-radius: 2px; display: block;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-row.full { grid-template-columns: 1fr; }
+
+  .field label {
+    display: block; font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .field label .req { color: var(--red); }
+
+  .field input, .field textarea, .field select {
+    width: 100%;
+    background: var(--gray);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--light);
+    padding: 13px 16px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.25s;
+    appearance: none;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--red); }
+  .field textarea { height: 110px; resize: vertical; }
+  .field select option { background: #242424; }
+
+  /* ── Package Cards ── */
+  .packages-grid { display: flex; flex-direction: column; gap: 12px; }
+
+  /* Package card */
+  .pkg-card {
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.25s, background 0.25s;
+    background: var(--gray);
+    position: relative;
+  }
+  .pkg-card:hover { border-color: rgba(212,43,43,0.4); }
+  .pkg-card.selected {
+    border-color: var(--red);
+    background: rgba(212,43,43,0.07);
+  }
+  .pkg-card.selected .pkg-check { background: linear-gradient(135deg, var(--red), var(--orange)); border-color: transparent; }
+  .pkg-card.selected .pkg-check::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+
+  /* popular badge */
+  .pkg-badge {
+    position: absolute; top: 12px; right: 14px;
+    background: linear-gradient(135deg, var(--red), var(--orange));
+    color: white; font-size: 9px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  .pkg-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 18px 12px;
+  }
+  .pkg-check {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s; font-size: 11px;
+  }
+  .pkg-icon { font-size: 22px; flex-shrink: 0; }
+  .pkg-info { flex: 1; }
+  .pkg-name { font-size: 14px; font-weight: 700; color: var(--light); line-height: 1.3; }
+  .pkg-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--red), var(--orange));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-top: 1px;
+  }
+  .pkg-price span { font-family: 'Barlow', sans-serif; font-size: 11px; color: var(--muted); -webkit-text-fill-color: var(--muted); }
+
+  /* features list */
+  .pkg-features {
+    padding: 0 18px 14px 54px;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .pkg-feat {
+    font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .pkg-feat::before { content: '→'; color: var(--red); font-size: 10px; flex-shrink: 0; }
+
+  /* sub-options (radio inside a package) */
+  .pkg-subopts {
+    display: none;
+    padding: 0 18px 14px 54px;
+    flex-direction: column; gap: 6px;
+  }
+  .pkg-card.selected .pkg-subopts { display: flex; }
+  .subopt {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px; padding: 10px 14px;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .subopt:hover { border-color: rgba(232,112,10,0.4); }
+  .subopt input[type=radio] { display: none; }
+  .subopt-dot {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .subopt input:checked ~ .subopt-dot {
+    background: linear-gradient(135deg, var(--orange), var(--red));
+    border-color: transparent;
+  }
+  .subopt input:checked ~ .subopt-dot::after { content: ''; width: 6px; height: 6px; background: white; border-radius: 50%; display: block; }
+  .subopt input:checked ~ .subopt-label { color: var(--light); }
+  .subopt-label { font-size: 13px; color: var(--muted); flex: 1; }
+  .subopt-price { font-size: 13px; font-weight: 700; color: var(--orange); }
+
+  /* Advance Payment Notice */
+  .advance-notice {
+    margin-top: 14px;
+    animation: fadeSlideUp 0.4s ease both;
+  }
+  .advance-inner {
+    display: flex; align-items: center; gap: 14px;
+    background: linear-gradient(135deg, rgba(212,43,43,0.1), rgba(232,112,10,0.07));
+    border: 1px solid rgba(212,43,43,0.35);
+    border-left: 4px solid var(--red);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .advance-icon { font-size: 26px; flex-shrink: 0; }
+  .advance-text { flex: 1; }
+  .advance-title { font-size: 13px; font-weight: 700; color: #f0ece6; margin-bottom: 3px; }
+  .advance-sub   { font-size: 12px; color: #999; line-height: 1.5; }
+  .advance-amount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px; letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--red), var(--orange));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    flex-shrink: 0; text-align: right; min-width: 80px;
+  }
+  .priority-row { display: flex; gap: 10px; }
+  .priority-btn {
+    flex: 1; padding: 12px; border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--gray); color: var(--muted);
+    text-align: center; font-size: 13px; font-family: 'Barlow', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .priority-btn.active { border-color: var(--red); color: var(--light); background: rgba(212,43,43,0.15); }
+
+  /* Submit */
+  .submit-area { margin-top: 30px; }
+  .btn-submit {
+    width: 100%;
+    background: linear-gradient(135deg, var(--red), var(--orange));
+    color: white; border: none;
+    padding: 18px; font-family: 'Barlow', sans-serif;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    border-radius: 4px; cursor: pointer;
+    transition: opacity 0.3s, transform 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn-submit:hover { opacity: 0.85; transform: translateY(-2px); }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit svg { width: 20px; height: 20px; }
+  .note { text-align: center; color: var(--muted); font-size: 13px; margin-top: 14px; }
+  .note span { color: var(--green); }
+
+  /* ═══════════════════════════════
+     BRANDED SPLASH SCREEN
+  ═══════════════════════════════ */
+  .splash {
+    display: none;
+    position: fixed; inset: 0; z-index: 9999;
+    background: #0a0a0a;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .splash.show { display: flex; }
+
+  /* animated background blobs */
+  .splash-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    animation: blobFloat 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .splash-blob-1 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(212,43,43,0.35), transparent 70%);
+    top: -80px; left: -80px;
+    animation-delay: 0s;
+  }
+  .splash-blob-2 {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(232,112,10,0.25), transparent 70%);
+    bottom: -60px; right: -60px;
+    animation-delay: 1.5s;
+  }
+  .splash-blob-3 {
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(212,43,43,0.15), transparent 70%);
+    top: 50%; left: 70%;
+    animation-delay: 0.8s;
+  }
+  @keyframes blobFloat {
+    0%,100% { transform: scale(1) translate(0,0); }
+    50%      { transform: scale(1.12) translate(10px,-10px); }
+  }
+
+  /* grid lines */
+  .splash-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* centre content */
+  .splash-inner {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0;
+    text-align: center;
+  }
+
+  /* logo ring */
+  .splash-ring {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(212,43,43,0.15), rgba(232,112,10,0.1));
+    border: 1px solid rgba(212,43,43,0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 28px;
+    position: relative;
+    animation: ringPulse 2s ease-in-out infinite;
+  }
+  .splash-ring::before {
+    content: '';
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,43,43,0.15);
+    animation: ringPulse 2s ease-in-out infinite 0.3s;
+  }
+  .splash-ring::after {
+    content: '';
+    position: absolute; inset: -12px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,43,43,0.07);
+    animation: ringPulse 2s ease-in-out infinite 0.6s;
+  }
+  @keyframes ringPulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.05); opacity: 0.8; }
+  }
+  .splash-ring svg { width: 40px; height: 40px; }
+
+  /* brand name */
+  .splash-brand {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px; letter-spacing: 8px;
+    background: linear-gradient(135deg, #d42b2b, #e8700a);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+    animation: fadeSlideUp 0.6s ease both;
+    animation-delay: 0.1s;
+  }
+  .splash-tagline {
+    font-size: 11px; letter-spacing: 4px;
+    text-transform: uppercase; color: #666;
+    margin-bottom: 44px;
+    animation: fadeSlideUp 0.6s ease both;
+    animation-delay: 0.2s;
+  }
+
+  /* status steps */
+  .splash-steps {
+    display: flex; flex-direction: column; gap: 12px;
+    width: 320px; margin-bottom: 40px;
+  }
+  .splash-step {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 18px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    opacity: 0.35;
+    transition: opacity 0.4s, border-color 0.4s, background 0.4s;
+  }
+  .splash-step.active {
+    opacity: 1;
+    border-color: rgba(212,43,43,0.4);
+    background: rgba(212,43,43,0.06);
+  }
+  .splash-step.done {
+    opacity: 0.9;
+    border-color: rgba(39,174,96,0.4);
+    background: rgba(39,174,96,0.06);
+  }
+  .step-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+    background: rgba(255,255,255,0.06);
+    transition: background 0.4s;
+  }
+  .splash-step.active .step-icon { background: rgba(212,43,43,0.2); }
+  .splash-step.done   .step-icon { background: rgba(39,174,96,0.2); }
+  .step-text { text-align: left; }
+  .step-title {
+    font-size: 13px; font-weight: 600;
+    color: #ccc; line-height: 1.3;
+    transition: color 0.4s;
+  }
+  .splash-step.active .step-title { color: #f0ece6; }
+  .splash-step.done   .step-title { color: #2ecc71; }
+  .step-sub { font-size: 10px; color: #555; letter-spacing: 0.5px; margin-top: 1px; }
+
+  /* progress bar */
+  .splash-progress-wrap {
+    width: 320px; height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px; overflow: hidden;
+    margin-bottom: 40px;
+  }
+  .splash-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #d42b2b, #e8700a);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.6s ease;
+  }
+
+  /* WhatsApp button — shown at end */
+  .splash-wa-btn {
+    display: flex;
+    align-items: center; justify-content: center; gap: 12px;
+    background: linear-gradient(135deg, #25d366, #128c7e);
+    color: white; text-decoration: none;
+    padding: 16px 40px; border-radius: 50px;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 8px 30px rgba(37,211,102,0.3);
+    cursor: pointer; border: none; width: 100%;
+    margin-top: 8px;
+  }
+  .splash-wa-btn svg { width: 22px; height: 22px; }
+
+  /* Guide card */
+  .splash-guide {
+    display: none;
+    flex-direction: column; gap: 16px;
+    width: 320px;
+    animation: bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  .splash-guide.visible { display: flex; }
+  .guide-steps {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .guide-step {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .guide-step:last-child { border-bottom: none; }
+  .guide-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, #d42b2b, #e8700a);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .guide-txt { font-size: 13px; color: #bbb; line-height: 1.5; text-align: left; }
+  .guide-txt strong { color: #f0ece6; }
+
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media(max-width:600px){
+    .header { padding: 16px 20px; }
+    .form-row { grid-template-columns: 1fr; }
+    .services-grid, .packages-grid { grid-template-columns: 1fr; }
+    .priority-row { flex-direction: column; }
+    .card { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ BRANDED SPLASH SCREEN ═══ -->
+<div class="splash" id="splash">
+  <div class="splash-blob splash-blob-1"></div>
+  <div class="splash-blob splash-blob-2"></div>
+  <div class="splash-blob splash-blob-3"></div>
+  <div class="splash-grid"></div>
+
+  <div class="splash-inner">
+    <!-- Logo ring -->
+    <div class="splash-ring">
+      <svg viewBox="0 0 40 40" fill="none">
+        <path d="M8 30 L8 10 L20 24 L32 10 L32 30" stroke="url(#g1)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#d42b2b"/>
+            <stop offset="1" stop-color="#e8700a"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <div class="splash-brand">MSA GRAPHICS</div>
+    <div class="splash-tagline">Creative Design Studio · Sri Lanka</div>
+
+    <!-- Steps -->
+    <div class="splash-steps">
+      <div class="splash-step" id="step1">
+        <div class="step-icon">📋</div>
+        <div class="step-text">
+          <div class="step-title">Order Details Collecting</div>
+          <div class="step-sub">Form data processing...</div>
+        </div>
+      </div>
+      <div class="splash-step" id="step2">
+        <div class="step-icon">🧾</div>
+        <div class="step-text">
+          <div class="step-title">Invoice PDF Generating</div>
+          <div class="step-sub">Branded invoice creating...</div>
+        </div>
+      </div>
+      <div class="splash-step" id="step3">
+        <div class="step-icon">💾</div>
+        <div class="step-text">
+          <div class="step-title">PDF Downloading</div>
+          <div class="step-sub">Saving to your device...</div>
+        </div>
+      </div>
+      <div class="splash-step" id="step4">
+        <div class="step-icon">✅</div>
+        <div class="step-text">
+          <div class="step-title">Ready to Send!</div>
+          <div class="step-sub">WhatsApp redirect ready...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="splash-progress-wrap">
+      <div class="splash-progress-bar" id="splashProgress"></div>
+    </div>
+
+    <!-- WhatsApp button (shown at end) -->
+    <!-- Instruction card + WA button -->
+    <div class="splash-guide" id="splashGuide">
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="guide-num">1</div>
+          <div class="guide-txt">Invoice PDF ඔබේ device එකට <strong>save වෙලා තියෙනවා</strong> 💾</div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-num">2</div>
+          <div class="guide-txt">WhatsApp open වෙයි — <strong>PDF file එක attach</strong> කරන්න 📎</div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-num">3</div>
+          <div class="guide-txt"><strong>Send</strong> කරන්න ✅</div>
+        </div>
+      </div>
+      <button class="splash-wa-btn visible" id="splashWaBtn" onclick="doWhatsApp()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp Open කරන්න
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:20px;width:100%;">
+    <a href="./index.html" style="color:var(--muted);text-decoration:none;font-size:13px;letter-spacing:1px;display:flex;align-items:center;gap:6px;transition:color 0.2s;" onmouseover="this.style.color='#f0ece6'" onmouseout="this.style.color=''">
+      ← Back
+    </a>
+    <div style="flex:1;">
+      <div class="header-logo">MSA Graphics</div>
+      <div class="header-sub">Customer Order Form</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="form-title">Order <span>Form</span></div>
+  <p class="form-subtitle">Form fill කරන්න → PDF generate වෙයි → WhatsApp හරහා Order එවන්න</p>
+
+  <!-- Customer Info -->
+  <div class="card">
+    <div class="card-title">Customer Details</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Full Name <span class="req">*</span></label>
+        <input type="text" id="custName" placeholder="ඔබේ නම">
+      </div>
+      <div class="field">
+        <label>Phone Number <span class="req">*</span></label>
+        <input type="tel" id="custPhone" placeholder="07X XXX XXXX">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>WhatsApp Number</label>
+        <input type="tel" id="custWA" placeholder="(Same as phone? Leave blank)">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="custEmail" placeholder="email@example.com">
+      </div>
+    </div>
+  </div>
+
+  <!-- Service -->
+  <div class="card">
+    <div class="card-title">Package / Service <span style="color:var(--red)">*</span></div>
+    <div class="packages-grid" id="servicesGrid">
+
+      <!-- Package 1: Tuition Class -->
+      <div class="pkg-card" id="pkg-tuition" onclick="selectPkg(this,'pkg-tuition')">
+        <div class="pkg-badge">⭐ BEST VALUE</div>
+        <div class="pkg-header">
+          <div class="pkg-check"></div>
+          <div class="pkg-icon">🏫</div>
+          <div class="pkg-info">
+            <div class="pkg-name">Unlimited Tuition Class Design Package</div>
+            <div class="pkg-price">Rs. 25,000 <span>/ 1 Month</span></div>
+          </div>
+        </div>
+        <div class="pkg-features">
+          <div class="pkg-feat">Unlimited Social Media Posts</div>
+          <div class="pkg-feat">Hand Bills & Tute Covers</div>
+          <div class="pkg-feat">Posters & Banners</div>
+          <div class="pkg-feat">1 Month Full Support</div>
+        </div>
+        <input type="hidden" class="pkg-value" value="Unlimited Tuition Class Design Package (1 Month) – Rs. 25,000">
+        <input type="hidden" class="pkg-amount" value="25000">
+      </div>
+
+      <!-- Package 2: Hand Bill / Tute Cover -->
+      <div class="pkg-card" id="pkg-handbill" onclick="selectPkg(this,'pkg-handbill')">
+        <div class="pkg-header">
+          <div class="pkg-check"></div>
+          <div class="pkg-icon">📄</div>
+          <div class="pkg-info">
+            <div class="pkg-name">Hand Bill / Tute Cover Design</div>
+            <div class="pkg-price">Rs. 1,200 – 1,500 <span>/ design</span></div>
+          </div>
+        </div>
+        <div class="pkg-features">
+          <div class="pkg-feat">Single page design</div>
+          <div class="pkg-feat">Print-ready file included</div>
+        </div>
+        <div class="pkg-subopts" id="subopts-handbill">
+          <label class="subopt">
+            <input type="radio" name="handbill_color" value="One Color – Rs. 1,200" data-amount="1200" onchange="updateSubopt('pkg-handbill',this)">
+            <div class="subopt-dot"></div>
+            <span class="subopt-label">🖤 One Color</span>
+            <span class="subopt-price">Rs. 1,200</span>
+          </label>
+          <label class="subopt">
+            <input type="radio" name="handbill_color" value="Two Color – Rs. 1,300" data-amount="1300" onchange="updateSubopt('pkg-handbill',this)">
+            <div class="subopt-dot"></div>
+            <span class="subopt-label">🎨 Two Color</span>
+            <span class="subopt-price">Rs. 1,300</span>
+          </label>
+          <label class="subopt">
+            <input type="radio" name="handbill_color" value="Four Color – Rs. 1,500" data-amount="1500" onchange="updateSubopt('pkg-handbill',this)">
+            <div class="subopt-dot"></div>
+            <span class="subopt-label">🌈 Four Color</span>
+            <span class="subopt-price">Rs. 1,500</span>
+          </label>
+        </div>
+        <input type="hidden" class="pkg-value" value="Hand Bill / Tute Cover Design">
+        <input type="hidden" class="pkg-amount" value="1200">
+      </div>
+
+      <!-- Package 3: Social Media Post -->
+      <div class="pkg-card" id="pkg-social" onclick="selectPkg(this,'pkg-social')">
+        <div class="pkg-header">
+          <div class="pkg-check"></div>
+          <div class="pkg-icon">📱</div>
+          <div class="pkg-info">
+            <div class="pkg-name">Social Media Post Design</div>
+            <div class="pkg-price">Rs. 1,000 – 2,000 <span>/ post</span></div>
+          </div>
+        </div>
+        <div class="pkg-features">
+          <div class="pkg-feat">Facebook / Instagram / WhatsApp</div>
+          <div class="pkg-feat">High-resolution file</div>
+          <div class="pkg-feat">Price varies by complexity</div>
+        </div>
+        <div class="pkg-subopts" id="subopts-social">
+          <label class="subopt">
+            <input type="radio" name="social_price" value="Simple Post – Rs. 1,000" data-amount="1000" onchange="updateSubopt('pkg-social',this)">
+            <div class="subopt-dot"></div>
+            <span class="subopt-label">Simple Post</span>
+            <span class="subopt-price">Rs. 1,000</span>
+          </label>
+          <label class="subopt">
+            <input type="radio" name="social_price" value="Standard Post – Rs. 1,500" data-amount="1500" onchange="updateSubopt('pkg-social',this)">
+            <div class="subopt-dot"></div>
+            <span class="subopt-label">Standard Post</span>
+            <span class="subopt-price">Rs. 1,500</span>
+          </label>
+          <label class="subopt">
+            <input type="radio" name="social_price" value="Premium Post – Rs. 2,000" data-amount="2000" onchange="updateSubopt('pkg-social',this)">
+            <div class="subopt-dot"></div>
+            <span class="subopt-label">Premium Post</span>
+            <span class="subopt-price">Rs. 2,000</span>
+          </label>
+        </div>
+        <input type="hidden" class="pkg-value" value="Social Media Post Design">
+        <input type="hidden" class="pkg-amount" value="1000">
+      </div>
+
+      <!-- Package 4: Custom Order -->
+      <div class="pkg-card" id="pkg-custom" onclick="selectPkg(this,'pkg-custom')">
+        <div class="pkg-header">
+          <div class="pkg-check"></div>
+          <div class="pkg-icon">✨</div>
+          <div class="pkg-info">
+            <div class="pkg-name">Custom / Other Design</div>
+            <div class="pkg-price">Price TBD <span>via WhatsApp</span></div>
+          </div>
+        </div>
+        <div class="pkg-features">
+          <div class="pkg-feat">Label design, Sticker, Banner, etc.</div>
+          <div class="pkg-feat">List එකේ නැති ඕනෑම design</div>
+          <div class="pkg-feat">Price WhatsApp හරහා confirm කරනවා</div>
+        </div>
+        <div class="pkg-subopts" id="subopts-custom" style="padding-bottom:16px;">
+          <div style="background:rgba(232,112,10,0.08);border:1px solid rgba(232,112,10,0.25);border-radius:6px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;">
+            <span style="font-size:18px;flex-shrink:0;">💬</span>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#e8700a;margin-bottom:4px;">WhatsApp හරහා අපිට කතා කරන්න</div>
+              <div style="font-size:12px;color:#888;line-height:1.6;">Whatsapp හරහා Order එක submit කළාම price confirm කරලා.Invoice එක අපි එවනවා.</div>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" class="pkg-value" value="Custom Design (Price via WhatsApp)">
+        <input type="hidden" class="pkg-amount" value="">
+      </div>
+
+    </div>
+
+    <!-- Advance Payment Notice -->
+    <div class="advance-notice" id="advanceNotice" style="display:none;">
+      <div class="advance-inner">
+        <div class="advance-icon">💳</div>
+        <div class="advance-text">
+          <div class="advance-title">50% Advance Payment අනිවාර්යයි</div>
+          <div class="advance-sub" id="advanceSub">Design එක start කිරීමට පෙර invoice මුදලෙන් 50% advance ගෙවිය යුතුය.</div>
+        </div>
+        <div class="advance-amount" id="advanceAmount"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Order Details -->
+  <div class="card">
+    <div class="card-title">Order Details</div>
+    <div class="form-row full">
+      <div class="field">
+        <label>Project Description <span class="req">*</span></label>
+        <textarea id="projDesc" placeholder="ඔබට අවශ්‍ය design එක ගැන detail කරන්න...&#10;Example: Logo design for a clothing brand. Need modern style with blue and white colors."></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Size / Dimensions</label>
+        <input type="text" id="projSize" placeholder="A4, 1080x1080, etc.">
+      </div>
+      <div class="field">
+        <label>Deadline</label>
+        <input type="date" id="projDeadline">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Color Preference</label>
+        <input type="text" id="projColor" placeholder="Blue & white, Dark theme, etc.">
+      </div>
+      <div class="field">
+        <label>Budget (Optional)</label>
+        <input type="text" id="projBudget" placeholder="Rs. XXXX">
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="field">
+        <label>Delivery Time</label>
+        <div class="priority-row">
+          <div class="priority-btn active" onclick="setPriority(this,'Normal')">🟢 Normal </div>
+          <div class="priority-btn" onclick="setPriority(this,'Urgent')">🟡 12 Hours (Extra Charge included) </div>
+          <div class="priority-btn" onclick="setPriority(this,'Very Urgent')">🔴 4 Hours (Extra Charge included)</div>
+        </div>
+        <input type="hidden" id="projPriority" value="Normal">
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="field">
+        <label>Additional Notes</label>
+        <textarea id="projNotes" placeholder="Reference links, special requirements, etc." style="height:80px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-area">
+    <button class="btn-submit" onclick="generateAndSend()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Invoice එක WhatsApp කරන්න
+    </button>
+    <p class="note">🧾 Invoice PDF automatically download වෙනවා + <span>WhatsApp</span> open වෙනවා</p>
+  </div>
+</div>
+
+<script>
+  // Priority buttons
+  function setPriority(el, val) {
+    document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('projPriority').value = val;
+  }
+
+  // ── Package selection ──
+  function selectPkg(card, id) {
+    const wasSelected = card.classList.contains('selected');
+    document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('selected'));
+    if (!wasSelected) {
+      card.classList.add('selected');
+      updateAdvanceNotice();
+    } else {
+      updateAdvanceNotice();
+    }
+  }
+
+  function updateAdvanceNotice() {
+    const notice   = document.getElementById('advanceNotice');
+    const amountEl = document.getElementById('advanceAmount');
+    const subEl    = document.getElementById('advanceSub');
+    const selected = document.querySelector('.pkg-card.selected');
+
+    if (!selected) { notice.style.display = 'none'; return; }
+
+    const amt = selected.querySelector('.pkg-amount').value;
+    const isCustom = selected.id === 'pkg-custom';
+
+    notice.style.display = 'block';
+
+    if (isCustom) {
+      amountEl.textContent = '';
+      subEl.textContent = 'Order එක WhatsApp හරහා confirm කළාට පසු 50% advance ගෙවිය යුතුය.ඉන් පසු Design එක start කරනවා.';
+    } else if (amt) {
+      const advance = Math.ceil(parseInt(amt) * 0.5);
+      amountEl.textContent = 'Rs. ' + advance.toLocaleString();
+      subEl.textContent = 'Invoice මුදලෙන් 50% advance ගෙවිය යුතුය. Balance ' + 'Rs. ' + advance.toLocaleString() + ' final files delivery දී ගෙවිය යුතුය.';
+    } else {
+      amountEl.textContent = '';
+      subEl.textContent = 'Design work ආරම්භ කිරීමට පෙර invoice මුදලෙන් 50% advance ගෙවිය යුතුය.';
+    }
+  }
+
+  function updateSubopt(pkgId, radio) {
+    const card = document.getElementById(pkgId);
+    card.querySelector('.pkg-amount').value  = radio.dataset.amount;
+    card.querySelector('.pkg-value').value   = card.querySelector('.pkg-name').textContent + ' – ' + radio.value;
+    updateAdvanceNotice();
+  }
+
+  function getServices() {
+    const selected = document.querySelector('.pkg-card.selected');
+    if (!selected) return [];
+    return [selected.querySelector('.pkg-value').value];
+  }
+
+  function getPackageAmount() {
+    const selected = document.querySelector('.pkg-card.selected');
+    if (!selected) return '';
+    return selected.querySelector('.pkg-amount').value;
+  }
+
+  function validate() {
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    const desc = document.getElementById('projDesc').value.trim();
+    const services = getServices();
+    if (!name) { alert('ඔබේ නම ඇතුළත් කරන්න!'); return false; }
+    if (!phone) { alert('Phone number ඇතුළත් කරන්න!'); return false; }
+    if (services.length === 0) { alert('Service එකක් select කරන්න!'); return false; }
+    if (!desc) { alert('Project description ලියන්න!'); return false; }
+    return true;
+  }
+
+  // ── Splash screen helpers ──
+  let _waURL = '';
+  function splashStep(active, progress) {
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById('step' + i);
+      el.classList.remove('active', 'done');
+      if (i < active) el.classList.add('done');
+      else if (i === active) el.classList.add('active');
+    }
+    document.getElementById('splashProgress').style.width = progress + '%';
+  }
+  function doWhatsApp() {
+    window.open(_waURL, '_blank');
+    setTimeout(() => {
+      document.getElementById('splash').classList.remove('show');
+      document.getElementById('splashGuide').classList.remove('visible');
+      splashStep(0, 0);
+    }, 400);
+  }
+
+  async function generateAndSend() {
+    if (!validate()) return;
+
+    const splash = document.getElementById('splash');
+    splash.classList.add('show');
+    splashStep(1, 10);
+    await new Promise(r => setTimeout(r, 600));
+
+    try {
+      splashStep(2, 35);
+      await new Promise(r => setTimeout(r, 400));
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      const W = 210, H = 297;
+      const M = 15; // margin
+      let y = 0;
+
+      const now = new Date();
+      const invNum = 'INV-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(Math.floor(Math.random()*9000)+1000);
+      const ordNum = invNum; // keep same ref for WhatsApp
+      const dateStr = now.toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'});
+
+      // ════════════════════════════════
+      // BACKGROUND — white invoice
+      // ════════════════════════════════
+      doc.setFillColor(255, 255, 255);
+      doc.rect(0, 0, W, H, 'F');
+
+      // ── Top color bar (gradient-like with two rects) ──
+      doc.setFillColor(212, 43, 43);
+      doc.rect(0, 0, W, 38, 'F');
+      // diagonal accent
+      doc.setFillColor(232, 112, 10);
+      // triangle shape via polygon
+      doc.triangle(W - 60, 0, W, 0, W, 38, 'F');
+
+      // ── INVOICE watermark diagonal text ──
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.04 }));
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(72);
+      doc.setTextColor(0, 0, 0);
+      doc.text('INVOICE', W/2, H/2 + 10, { align: 'center', angle: 45 });
+      doc.restoreGraphicsState();
+
+      // ── Brand name in header ──
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(24);
+      doc.setTextColor(255, 255, 255);
+      doc.text('MSA GRAPHICS', M, 18);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(255, 200, 200);
+      doc.text('CREATIVE DESIGN STUDIO', M, 25);
+      doc.text('077 2037 464  |  071 1037 464  |  maheesha133@gmail.com', M, 31);
+
+      // ── INVOICE label top-right ──
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(28);
+      doc.setTextColor(255, 255, 255);
+      doc.text('INVOICE', W - M, 22, { align: 'right' });
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(255, 200, 200);
+      doc.text(invNum, W - M, 31, { align: 'right' });
+
+      y = 50;
+
+      // ════════════════════════════════
+      // BILL TO + INVOICE META side by side
+      // ════════════════════════════════
+      const custName  = document.getElementById('custName').value.trim();
+      const custPhone = document.getElementById('custPhone').value.trim();
+      const custWA    = document.getElementById('custWA').value.trim();
+      const custEmail = document.getElementById('custEmail').value.trim();
+
+      // Left — Bill To
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(212, 43, 43);
+      doc.text('BILL TO', M, y);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(30, 30, 30);
+      doc.text(custName, M, y + 7);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(90, 90, 90);
+      doc.text(custPhone, M, y + 14);
+      if (custWA)    doc.text('WA: ' + custWA,    M, y + 20);
+      if (custEmail) doc.text(custEmail, M, y + (custWA ? 26 : 20));
+
+      // Right — Invoice meta box
+      const bx = 120, bw = W - bx - M;
+      doc.setFillColor(252, 252, 252);
+      doc.roundedRect(bx, y - 4, bw, 38, 2, 2, 'F');
+      doc.setDrawColor(230, 230, 230);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(bx, y - 4, bw, 38, 2, 2, 'S');
+
+      const metaRows = [
+        ['Invoice No.', invNum],
+        ['Invoice Date', dateStr],
+        ['Status', 'PENDING PAYMENT'],
+      ];
+      const deadline = document.getElementById('projDeadline').value;
+      if (deadline) metaRows.push(['Deadline', new Date(deadline).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})]);
+
+      metaRows.forEach((row, i) => {
+        const ry = y + i * 8;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(130, 130, 130);
+        doc.text(row[0], bx + 4, ry + 2);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(row[0] === 'Status' ? 212 : 30, row[0] === 'Status' ? 43 : 30, row[0] === 'Status' ? 43 : 30);
+        doc.text(row[1], bx + bw - 4, ry + 2, { align: 'right' });
+      });
+
+      y += 46;
+
+      // ════════════════════════════════
+      // SERVICES TABLE
+      // ════════════════════════════════
+      const services = getServices();
+      const budget = document.getElementById('projBudget').value.trim() || getPackageAmount();
+
+      // Table header
+      doc.setFillColor(30, 30, 30);
+      doc.rect(M, y, W - M*2, 9, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text('#',         M + 3,      y + 6);
+      doc.text('DESCRIPTION',M + 12,   y + 6);
+      doc.text('PRIORITY',  W - M - 60, y + 6);
+      doc.text('AMOUNT',    W - M - 4,  y + 6, { align: 'right' });
+      y += 9;
+
+      const priority = document.getElementById('projPriority').value;
+      const projDesc = document.getElementById('projDesc').value.trim();
+      const projSize = document.getElementById('projSize').value.trim();
+      const projColor= document.getElementById('projColor').value.trim();
+
+      // Parse budget — try to use as total; divide by services if multiple
+      let totalAmt = 0;
+      let hasBudget = false;
+      if (budget) {
+        const num = parseFloat(budget.replace(/[^0-9.]/g, ''));
+        if (!isNaN(num)) { totalAmt = num; hasBudget = true; }
+      }
+      const perItem = hasBudget && services.length ? (totalAmt / services.length) : 0;
+
+      services.forEach((svc, i) => {
+        const rowY = y;
+        const isEven = i % 2 === 0;
+        doc.setFillColor(isEven ? 252 : 246, isEven ? 252 : 246, isEven ? 252 : 249);
+        doc.rect(M, rowY, W - M*2, 11, 'F');
+        doc.setDrawColor(235, 235, 235);
+        doc.setLineWidth(0.2);
+        doc.line(M, rowY + 11, W - M, rowY + 11);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(212, 43, 43);
+        doc.text(String(i + 1).padStart(2,'0'), M + 3, rowY + 7.5);
+
+        doc.setTextColor(30, 30, 30);
+        doc.text(svc, M + 12, rowY + 7.5);
+
+        // priority badge
+        const pColor = priority === 'Very Urgent' ? [220,50,50] : priority === 'Urgent' ? [230,120,10] : [40,160,80];
+        doc.setFillColor(...pColor);
+        doc.roundedRect(W - M - 63, rowY + 2, 30, 6, 1, 1, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.setTextColor(255,255,255);
+        doc.text(priority.toUpperCase(), W - M - 48, rowY + 6.5, { align: 'center' });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(30,30,30);
+        if (hasBudget) {
+          doc.text('Rs. ' + perItem.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}), W - M - 4, rowY + 7.5, { align: 'right' });
+        } else {
+          doc.setTextColor(180,180,180);
+          doc.text('TBD', W - M - 4, rowY + 7.5, { align: 'right' });
+        }
+        y += 11;
+      });
+
+      // Description sub-row
+      if (projDesc) {
+        doc.setFillColor(250, 248, 245);
+        doc.rect(M, y, W - M*2, 14, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(130,130,130);
+        doc.text('Project Description:', M + 12, y + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(60,60,60);
+        const dLines = doc.splitTextToSize(projDesc, W - M*2 - 24);
+        doc.text(dLines.slice(0,2), M + 12, y + 10);
+        y += 14;
+      }
+
+      if (projSize || projColor) {
+        doc.setFillColor(248, 248, 252);
+        doc.rect(M, y, W - M*2, 9, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(130,130,130);
+        let extras = [];
+        if (projSize)  extras.push('Size: ' + projSize);
+        if (projColor) extras.push('Colors: ' + projColor);
+        doc.text(extras.join('   |   '), M + 12, y + 6);
+        y += 9;
+      }
+
+      y += 6;
+
+      // ── Total box ──
+      const totBoxW = 80;
+      const totBoxX = W - M - totBoxW;
+      doc.setFillColor(245, 245, 245);
+      doc.roundedRect(totBoxX, y, totBoxW, hasBudget ? 28 : 18, 2, 2, 'F');
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(100,100,100);
+      doc.text('Subtotal', totBoxX + 4, y + 7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30,30,30);
+      doc.text(hasBudget ? 'Rs. ' + totalAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'TBD', totBoxX + totBoxW - 4, y + 7, { align:'right' });
+
+      if (hasBudget) {
+        doc.setDrawColor(220,220,220);
+        doc.setLineWidth(0.3);
+        doc.line(totBoxX + 3, y + 11, totBoxX + totBoxW - 3, y + 11);
+
+        doc.setFillColor(212, 43, 43);
+        doc.roundedRect(totBoxX, y + 13, totBoxW, 13, 2, 2, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(255,255,255);
+        doc.text('TOTAL (LKR)', totBoxX + 4, y + 21);
+        doc.setFontSize(10);
+        doc.text('Rs. ' + totalAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}), totBoxX + totBoxW - 4, y + 21, { align:'right' });
+        y += 28 + 10;
+      } else {
+        y += 18 + 10;
+      }
+
+      // ════════════════════════════════
+      // PAYMENT DETAILS
+      // ════════════════════════════════
+      doc.setFillColor(30, 30, 30);
+      doc.roundedRect(M, y, (W - M*2) * 0.54, 38, 2, 2, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(212, 43, 43);
+      doc.text('PAYMENT DETAILS', M + 4, y + 7);
+
+      const bankRows = [
+        ['Bank',       'Bank of Ceylon (BOC)'],
+        ['Branch',     'Embilipitiya Branch'],
+        ['Acc. Name',  'SANDARUWAN WM'],
+        ['Acc. No.',   '95822796'],
+      ];
+      bankRows.forEach((row, i) => {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(160,160,160);
+        doc.text(row[0], M + 4, y + 14 + i * 7);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(230,230,230);
+        doc.text(row[1], M + 22, y + 14 + i * 7);
+      });
+
+      // Terms box right
+      const termX = M + (W - M*2) * 0.58;
+      const termW = (W - M*2) * 0.40;
+
+      // calculate advance
+      const advanceAmt = hasBudget ? Math.ceil(totalAmt * 0.5) : 0;
+      const isCustomPkg = (document.querySelector('.pkg-card.selected') || {}).id === 'pkg-custom';
+
+      // expand height if we have advance row
+      const termsH = 38;
+      doc.setFillColor(254, 248, 240);
+      doc.roundedRect(termX, y, termW, termsH, 2, 2, 'F');
+      doc.setDrawColor(232,112,10);
+      doc.setLineWidth(0.5);
+      doc.line(termX, y, termX, y + termsH);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(232, 112, 10);
+      doc.text('TERMS & NOTE', termX + 4, y + 7);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(80, 80, 80);
+      const terms = [
+        '• Payment within 3 days of invoice.',
+        '• 50% Advance required to start.',
+        '• Revisions: up to 3 rounds.',
+        '• Final files after full payment.',
+      ];
+      terms.forEach((t, i) => doc.text(t, termX + 4, y + 14 + i * 6));
+
+      // Advance payment highlighted box (left side, below payment details)
+      const advBoxX = M;
+      const advBoxW = (W - M*2) * 0.54;
+      doc.setFillColor(212, 43, 43);
+      doc.roundedRect(advBoxX, y + termsH - 14, advBoxW, 12, 2, 2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text('💳  50% ADVANCE PAYMENT', advBoxX + 4, y + termsH - 8);
+      if (hasBudget && !isCustomPkg) {
+        doc.setFontSize(9);
+        doc.text('Rs. ' + advanceAmt.toLocaleString('en-US', {minimumFractionDigits:2}), advBoxX + advBoxW - 4, y + termsH - 8, { align: 'right' });
+      } else {
+        doc.setFontSize(8);
+        doc.text('To be confirmed via WhatsApp', advBoxX + advBoxW - 4, y + termsH - 8, { align: 'right' });
+      }
+
+      y += 46;
+
+      // ── Notes if any ──
+      const notes = document.getElementById('projNotes').value.trim();
+      if (notes && y < H - 40) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(130,130,130);
+        doc.text('ADDITIONAL NOTES', M, y + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(80,80,80);
+        const nLines = doc.splitTextToSize(notes, W - M*2);
+        doc.text(nLines, M, y + 12);
+        y += 12 + nLines.length * 5;
+      }
+
+      // ════════════════════════════════
+      // FOOTER
+      // ════════════════════════════════
+      doc.setFillColor(30, 30, 30);
+      doc.rect(0, H - 20, W, 20, 'F');
+      doc.setFillColor(212, 43, 43);
+      doc.rect(0, H - 20, W, 2, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(255,255,255);
+      doc.text('MSA Graphics', M, H - 10);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(150,150,150);
+      doc.text('Thank you for your business! · maheesha133@gmail.com · 077 2037 464', W/2, H - 10, { align:'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(130,130,130);
+      doc.text('Page 1 of 1', W - M, H - 10, { align:'right' });
+
+      // ── Step 3: Save PDF ──
+      splashStep(3, 70);
+      await new Promise(r => setTimeout(r, 300));
+      const fname = `MSA-Invoice-${custName.replace(/\s+/g,'-')}-${invNum}.pdf`;
+      doc.save(fname);
+
+      // ── Step 4: Ready ──
+      await new Promise(r => setTimeout(r, 600));
+      splashStep(4, 100);
+
+      // ── Build WhatsApp URL ──
+      const svcList = services.join(', ');
+      const msg = `🎨 *MSA Graphics – New Order*\n\n` +
+        `📋 *Invoice No:* ${invNum}\n` +
+        `👤 *Name:* ${custName}\n` +
+        `📞 *Phone:* ${custPhone}\n` +
+        `🛠️ *Service:* ${svcList}\n` +
+        `⚡ *Priority:* ${priority}\n` +
+        (deadline ? `📅 *Deadline:* ${new Date(deadline).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}\n` : '') +
+        (projSize  ? `📐 *Size:* ${projSize}\n` : '') +
+        (projColor ? `🎨 *Colors:* ${projColor}\n` : '') +
+        (budget    ? `💰 *Amount:* Rs. ${budget}\n` : '') +
+        `\n📝 *Description:*\n${projDesc}\n` +
+        (notes     ? `\n📌 *Notes:* ${notes}\n` : '') +
+        `\n💳 *Payment:* BOC | SANDARUWAN WM | 95822796 | Embilipitiya\n` +
+        (hasBudget && !isCustomPkg ? `💰 *50% Advance:* Rs. ${Math.ceil(totalAmt*0.5).toLocaleString()}\n` : '') +
+        (isCustomPkg ? `💬 *Custom Order — Price discuss කරන්න*\n` : '') +
+        `\n_Invoice PDF automatically download වෙලා තියෙනවා_`;
+
+      _waURL = `https://wa.me/94772037464?text=${encodeURIComponent(msg)}`;
+
+      // ── Show guide card ──
+      await new Promise(r => setTimeout(r, 500));
+      document.getElementById('splashGuide').classList.add('visible');
+
+    } catch (err) {
+      document.getElementById('splash').classList.remove('show');
+      alert('Error: ' + err.message);
+      console.error(err);
+    }
+  }
+
+  // ── Auto-select package from URL param ──
+  window.addEventListener('DOMContentLoaded', () => {
+    const pkg = new URLSearchParams(window.location.search).get('pkg');
+    const map = { tuition: 'pkg-tuition', handbill: 'pkg-handbill', social: 'pkg-social', custom: 'pkg-custom' };
+    if (pkg && map[pkg]) {
+      const card = document.getElementById(map[pkg]);
+      if (card) {
+        selectPkg(card, map[pkg]);
+        setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 400);
+      }
+    }
+  });
+</script>
+</body>
+</html>
