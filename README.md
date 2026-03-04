@@ -1,2 +1,0 @@
-# msagraphics
-Graphic Design services
